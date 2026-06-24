@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-06-24
+
 ### Added
 - Added `webSearch.enabled` config to disable `web_search` tool registration. Thanks @webwarrior-ws for PR #38 and @knocte for reporting #22.
 - Added `workflow: "auto-summary"` for `web_search` to generate a summary without opening the browser curator. Thanks @Ilm-Alan for PR #57 and @baflow for reporting #32.
