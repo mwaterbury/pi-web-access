@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-06-25
+
 ### Added
 - Added `ssrf.allowRanges` config to exempt CIDR ranges (e.g. `198.18.0.0/15`) from the SSRF guard, so `fetch_content`/`web_search` work on hosts whose network proxy runs in TUN + fake-IP mode (Surge, Clash, Mihomo, Stash, ...) where public domains resolve into a synthetic reserved range. Off by default. Thanks @TianZuo555 for reporting #101 and PR #102.
 
