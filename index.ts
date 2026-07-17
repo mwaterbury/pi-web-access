@@ -14,6 +14,8 @@ import {
 	generateId,
 	getAllResults,
 	getResult,
+	getResultReference,
+	resultCacheDir,
 	restoreFromSession,
 	storeResult,
 	type QueryResultData,
@@ -562,7 +564,7 @@ export default function (pi: ExtensionAPI) {
 		const fetchId = generateId();
 		const controller = new AbortController();
 		pendingFetches.set(fetchId, controller);
-		fetchAllContent(urls, controller.signal)
+		fetchAllContent(urls, controller.signal, { pdfOutputDir: resultCacheDir(fetchId) })
 			.then((fetched) => {
 				if (!sessionActive || !pendingFetches.has(fetchId)) return;
 				const data: StoredSearchData = {
@@ -572,7 +574,7 @@ export default function (pi: ExtensionAPI) {
 					urls: stripThumbnails(fetched),
 				};
 				storeResult(fetchId, data);
-				pi.appendEntry("web-search-results", data);
+				pi.appendEntry("web-search-results", getResultReference(data));
 				const ok = fetched.filter(f => !f.error).length;
 				pi.sendMessage(
 					{
@@ -608,7 +610,7 @@ export default function (pi: ExtensionAPI) {
 			id, type: "search", timestamp: Date.now(), queries: results,
 		};
 		storeResult(id, data);
-		pi.appendEntry("web-search-results", data);
+		pi.appendEntry("web-search-results", getResultReference(data));
 		return id;
 	}
 
@@ -881,7 +883,7 @@ export default function (pi: ExtensionAPI) {
 				urls: opts.inlineContent,
 			};
 			storeResult(fetchId, data);
-			pi.appendEntry("web-search-results", data);
+			pi.appendEntry("web-search-results", getResultReference(data));
 			if (!hasApprovedSummary) {
 				output += `---\nFull content for ${opts.inlineContent.length} sources available [${fetchId}].`;
 			}
@@ -1828,12 +1830,13 @@ export default function (pi: ExtensionAPI) {
 				details: { phase: "fetch", progress: 0 },
 			});
 
-			const fetchResults = await fetchAllContent(urlList, signal, options);
+			// Allocate the ID first so PDF artifacts are co-located with this cached result.
+			const responseId = generateId();
+			const fetchResults = await fetchAllContent(urlList, signal, { ...options, pdfOutputDir: resultCacheDir(responseId) });
 			const successful = fetchResults.filter((r) => !r.error).length;
 			const totalChars = fetchResults.reduce((sum, r) => sum + r.content.length, 0);
 
 			// ALWAYS store results (even for single URL)
-			const responseId = generateId();
 			const data: StoredSearchData = {
 				id: responseId,
 				type: "fetch",
@@ -1841,7 +1844,7 @@ export default function (pi: ExtensionAPI) {
 				urls: stripThumbnails(fetchResults),
 			};
 			storeResult(responseId, data);
-			pi.appendEntry("web-search-results", data);
+			pi.appendEntry("web-search-results", getResultReference(data));
 
 			// Single URL: return content directly (possibly truncated) with responseId
 			if (urlList.length === 1) {
@@ -2055,8 +2058,8 @@ export default function (pi: ExtensionAPI) {
 			const data = getResult(params.responseId);
 			if (!data) {
 				return {
-					content: [{ type: "text", text: `Error: No stored results for "${params.responseId}"` }],
-					details: { error: "Not found", responseId: params.responseId },
+					content: [{ type: "text", text: `Error: Cache miss for "${params.responseId}". The result is missing or has expired.` }],
+					details: { error: "Cache miss", responseId: params.responseId },
 				};
 			}
 

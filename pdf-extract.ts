@@ -8,7 +8,6 @@
 import { getDocumentProxy } from "unpdf";
 import { writeFile, mkdir } from "node:fs/promises";
 import { join, basename } from "node:path";
-import { homedir } from "node:os";
 
 export interface PDFExtractResult {
   title: string;
@@ -24,7 +23,7 @@ export interface PDFExtractOptions {
 }
 
 const DEFAULT_MAX_PAGES = 100;
-const DEFAULT_OUTPUT_DIR = join(homedir(), "Downloads");
+const DEFAULT_OUTPUT_DIR = "/tmp/pi-web-access";
 
 /**
  * Extract text from a PDF buffer and save to markdown file

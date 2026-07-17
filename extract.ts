@@ -103,6 +103,8 @@ export interface ExtractOptions {
 	timestamp?: string;
 	frames?: number;
 	model?: string;
+	/** Directory for PDF markdown artifacts. */
+	pdfOutputDir?: string;
 	/** Custom DNS resolver used for SSRF validation. Primarily a test seam. */
 	lookup?: Lookup;
 }
@@ -590,7 +592,7 @@ async function extractViaHttp(
 		if (isPDFContent) {
 			try {
 				const buffer = await response.arrayBuffer();
-				const result = await extractPDFToMarkdown(buffer, url);
+				const result = await extractPDFToMarkdown(buffer, url, { outputDir: options?.pdfOutputDir });
 				activityMonitor.logComplete(activityId, response.status);
 				return {
 					url,
